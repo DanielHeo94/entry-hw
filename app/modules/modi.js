@@ -1,10 +1,10 @@
-var connect_ = {};
-var conModuleName = [];
-var hrI = 0;
-var hrJ = null;
-var path = "";
-var messageBuffer_ = "";
-var clear = null;
+var connect_ = {}; // The object containing connected modules' information.
+var moduleNames = [];
+var moduleNumber = 0; // Module number.
+var moduleName = null; // Module name.
+var path = ""; // Serial port number.
+var messageBuffer_ = ""; // JSON message buffer from modules.
+var clear = null; // Display clear command JSON object.
 
 var moduleCount = {
     number: 0,
@@ -23,6 +23,8 @@ var moduleCount = {
     usb: 0,
     network: 0
 };
+
+// Parts numbers to set properties of output modules.
 var setProperty = {
     LED_RGB: 16,
 
@@ -118,6 +120,8 @@ var setProperty = {
 
     DISPLAY_TEXT: 17
 };
+
+// Parts numbers to get properties of input modules.
 var getProperty = {
     BUTTON_CLICK: 2,
     BUTTON_DBLCLICK: 3,
@@ -169,6 +173,7 @@ var getProperty = {
     MOTOR_RTORQUE: 2,
     MOTOR_LTORQUE: 10
 };
+
 var outputIndex = {
     "led" : 0,
     "motor" : 0, 
@@ -286,7 +291,7 @@ Module.prototype.type2strArr = function( type ) {
     return [categoryArr[category], moduleArr[category][module], moduleArr[category][module], swDec];
 }
 
-Module.prototype.handleJsonMessage = function( object ) {
+Module.prototype.handleJsonMessage = function(object) {
     var obj = {};
 
     obj.c = object.c;
@@ -295,12 +300,14 @@ Module.prototype.handleJsonMessage = function( object ) {
     var byteTemp = atob(object.b);
     var buffer = this.str2ab(byteTemp);
 
-    switch(obj.c){
+    switch(obj.c) {
         case 0x00:
-            this.updateHealth( obj.id, path );
+            this.updateHealth(obj.id, path);
             this.requestData = null;
             console.log(object);
+
             break;
+
         case 0x05:
             this.offPnp(obj.id);
 
@@ -312,20 +319,29 @@ Module.prototype.handleJsonMessage = function( object ) {
             obj.module = arr[1];
             obj.from = path;
             this.setConnect( obj.category, obj.module, obj.from, obj.id, obj.uuid);
+
             break;
+
         case 0x1F:
             var propertyValue = new Uint16Array(buffer, 0, 1);
+
             if(propertyValue > 1000){
                 propertyValue = propertyValue - 65535;
             }
+
             if(object.d == 0 && object.d == 1){
                 return;
             }
+
             for(var i in connect_){
                 if(obj.id == connect_[i].id){
                     connect_[i].value[object.d] = Math.floor(propertyValue/10);  
                 }
             }
+
+            return;
+        
+        default:
             return;
     }
 }
@@ -337,33 +353,35 @@ Module.prototype.offPnp = function(id){
 }
 
 Module.prototype.getJson = function() {
-    while ( true ) {
-        var index = messageBuffer_.search( '{' );
+    while (true) {
+        var index = messageBuffer_.search('{');
 
-        if ( index === -1 ) {
+        if (index === -1) {
             messageBuffer_ = "";
             return false;
         }
 
-        messageBuffer_ = messageBuffer_.slice( index );
+        messageBuffer_ = messageBuffer_.slice(index);
 
-        index = messageBuffer_.search( '}' );
-        if ( index === -1 ) {
+        index = messageBuffer_.search('}');
+        if (index === -1) {
             return false;
         }
 
         index = index + 1;
-        var jsonString = messageBuffer_.slice( 0, index );
-        messageBuffer_ = messageBuffer_.slice( index );
+
+        var jsonString = messageBuffer_.slice(0, index);
+        messageBuffer_ = messageBuffer_.slice(index);
 
         var json;
+
         try {
-            json = JSON.parse( jsonString );
-        }catch(e) {
+            json = JSON.parse(jsonString);
+        } catch(e) {
             return false;
         }
 
-        if ( json.c === undefined ){
+        if (json.c === undefined) {
             return false;
         }
 
@@ -379,63 +397,84 @@ Module.prototype.setSerialPort = function(sp) {
     path = sp.path;
 };
 
+// Handle data from hardware modules.
 Module.prototype.handleLocalData = function(data) { // data: Native Buffer
     messageBuffer_ += data;
-    while(true){
+
+    while(true) {
         var json = this.getJson();
         if ( json === false )
             return;
         try{
             this.handleJsonMessage(json);
-        }catch(err){}
+        } catch(err) {
+
+        }
     }
 };
 
+// Handle data from entry.js.
 Module.prototype.handleRemoteData = function(handler) {
-    var moduleValue = handler.read('moduleValue');
-    if(conModuleName.length <  Object.keys(connect_).length){
+    /*
+        Modules
+            Module Name
+                Module Number
+                    Values...
+            ...
+    */
+    var modules = handler.read('moduleValue');
+
+    if(moduleNames.length < Object.keys(connect_).length) {
         for(var i in connect_){
             if(connect_[i].moduleT)
-                conModuleName.push(connect_[i].moduleT);
+                moduleNames.push(connect_[i].moduleT);
         }
     }
-    hrJ = conModuleName.shift();
-    hrI = outputIndex[hrJ];
 
-    if(!moduleValue[hrJ])
-    return;
+    moduleName = moduleNames.shift();
+    moduleNumber = outputIndex[moduleName];
 
-    if(moduleValue[hrJ].length != 0){
-        this.moduleData = moduleValue[hrJ][hrI];
-        if(!this.moduleData){
-            outputIndex[hrJ] = 0;
+    // Module name not defined.
+    if(!modules[moduleName])
+        return;
+
+    // Module not connected.
+    if(modules[moduleName].length != 0) {
+        this.moduleData = modules[moduleName][moduleNumber]; // The values of specific module.
+
+        if(!this.moduleData) {
+            outputIndex[moduleName] = 0;
             isSet = false;
+
             return;
         }
-        if(outputIndex[hrJ]+1 <= moduleValue[hrJ].length){
-            outputIndex[hrJ]++;
+        
+        if(outputIndex[moduleName] + 1 <= modules[moduleName].length) {
+            outputIndex[moduleName]++;
             isSet = false;
         }
     }
-    if(this.moduleData){
+
+    if(this.moduleData) {
         this.requestData = this.setProperty(JSON.parse(this.moduleData));
     }
 };
 
 Module.prototype.requestLocalData = function() {
-    if(displayArr.length > 0){
+    if(displayArr.length > 0) {
         return displayArr.shift();
     }
+
     return this.requestData;
 };
 
-Module.prototype.setProperty = function(moduleValue) {
+Module.prototype.setProperty = function(modules) {
     var obj = {};
 
-    if(!moduleValue)
+    if(!modules)
         return;
 
-    if(!moduleValue.module)
+    if(!modules.module)
         return null;
 
     obj.c = 0x04;
@@ -443,76 +482,85 @@ Module.prototype.setProperty = function(moduleValue) {
 
     var buffer = new ArrayBuffer(8);
     var view = new Uint16Array(buffer);
-    var moduleName = moduleValue.module.split("_")[0];
+    var moduleName = modules.module.split("_").first;
 
-    if(moduleName == "DISPLAY"){
-        this.setDisplay(moduleValue);
+    if(moduleName == "DISPLAY") {
+        this.setDisplay(modules);
         return null;
     }
-    if(moduleValue.value1){
-        view[0] = moduleValue.value1;
+    
+    if(modules.value1) {
+        view[0] = modules.value1;
 
-        if(setProperty[moduleValue.value1]){
-            view[0] = setProperty[moduleValue.value1];
+        if(setProperty[modules.value1]) {
+            view[0] = setProperty[modules.value1];
         }
     }
-    if(moduleValue.value2){
-        view[1] = moduleValue.value2;
+
+    if(modules.value2) {
+        view[1] = modules.value2;
     }
-    if(moduleValue.value3){
-        view[2] = moduleValue.value3;
+
+    if(modules.value3) {
+        view[2] = modules.value3;
     }
 
     var b64 = btoa(this.ab2str(buffer));
 
-    obj.s = setProperty[moduleValue.module];//function ID
-    obj.d = moduleValue.id;// module ID
+    obj.s = setProperty[modules.module];//function ID
+    obj.d = modules.id;// module ID
     obj.b = b64;// property value
-    clear = null;
+    clear = null; // flush display
     return JSON.stringify(obj);  
 };
 
 var displayArr = [];
 var displayId = null;
 var oldData = null;
-Module.prototype.setDisplay = function(moduleValue){
+
+Module.prototype.setDisplay = function(modules) {
     if(displayArr.length != 0)
         return;
+
     var clear = {
         c : 0x04,
         s : 20,
-        d : moduleValue.id,
+        d : modules.id,
         b : "AAA=",
         l : 2
     };
+
     displayArr[0] = JSON.stringify(clear);
 
     var obj = {};
     obj.c = 0x04;
 
-    var str = moduleValue.value1;
+    var str = modules.value1;
 
-    if(oldData == str && displayId == moduleValue.id){
+    if(oldData == str && displayId == modules.id) {
         displayArr = [];
         return;
     }
+
     oldData = str;
-    displayId = moduleValue.id;
+    displayId = modules.id;
 
     if(str.length > 8)
         return;
 
     var buffer = new ArrayBuffer(str.length);
     var view = new Uint8Array(buffer);
+
     for (var i = 0, strLen = str.length; i < strLen; i++) {
         view[i] = str.charCodeAt(i);
     }
+
     obj.l = str.length;
 
     var b64 = btoa(this.ab2str(buffer));
 
-    obj.s = setProperty[moduleValue.module];//function ID
-    obj.d = moduleValue.id;// module ID
+    obj.s = setProperty[modules.module]; //function ID
+    obj.d = modules.id;// module ID
     obj.b = b64;// property value
 
     displayArr[1] = JSON.stringify(obj);
@@ -520,55 +568,63 @@ Module.prototype.setDisplay = function(moduleValue){
 };
 
 var arr = [];
+
 Module.prototype.getProperty = function() {
-    if(arr.length == 0)
+    if(arr.length == 0) {
         arr = [];
-    else if(arr.length != 0){
+    } else if(arr.length != 0) {
         return arr.shift();  
     }
 
     if(connect_.length == 0)
         return;
 
-    for(var i in connect_){
+    for(var i in connect_) {
         if(i != path){
             for(var j in getProperty){
                 var s = j.split("_")[0].toLowerCase();
                 if(s == connect_[i].moduleT){
-                    arr.push(this.getPropertyJson(getProperty[j],connect_[i].id));
+                    arr.push(this.getPropertyJson(getProperty[j], connect_[i].id));
                 }
             }
         }
     }
 };
 
-Module.prototype.getPropertyJson = function(propertyNum, moduleID){
+Module.prototype.getPropertyJson = function(propertyNumber, moduleId) {
     var obj = {};
     obj.c = 0x03; 
+
     var buffer = new ArrayBuffer(4);
     var view = new Uint8Array(buffer);
-    view[0] = propertyNum;
+
+    view[0] = propertyNumber;
     view[2] = 97;
+    
     var b64 = btoa(this.ab2str(buffer));
 
     obj.s = 0;
-    obj.d = moduleID;
+    obj.d = moduleId;
 
     obj.b = b64;
     obj.l = 4;
-    return JSON.stringify(obj);  
+
+    return JSON.stringify(obj);
 };
 
 Module.prototype.requestRemoteData = function(handler) {
     var arr = new Object();
-    $.each(connect_,function(index){
+
+    $.each(connect_,function(index) {
         if(index != path){
-            if(arr[connect_[index].moduleT] == undefined){
+            if(arr[connect_[index].moduleT] == undefined) {
                 arr[connect_[index].moduleT] = new Array();
-            }      
+            }
+
             arr[connect_[index].moduleT][connect_[index].num] = JSON.stringify(connect_[index]);
         }
     });
+
     handler.write("module", arr);
 };
 
