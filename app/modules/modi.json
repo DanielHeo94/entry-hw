@@ -8,6 +8,7 @@
     "icon": "modi.png",
     "module": "modi.js",
     "url": "http://www.luxrobo.com/",
+    "email": "customer_support@luxrobo.com",
     "driver": {
         "win32-ia32": "compat/SETUP.EXE",
         "win32-x64": "compat/SETUP.EXE"
