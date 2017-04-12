@@ -188,21 +188,6 @@ function Module() {
     this.moduleData = null;
 }
 
-setInterval(function disconnectHandler(){// disconnect cheak
-    for (var obj in connect_){
-        newT = new Date().getTime();
-        oldT = connect_[obj].ping;
-        if (oldT === undefined){
-            continue;
-        }
-        if (newT - oldT > 3500){
-            // disconnect
-            console.log("DC");//모듈 disconnect
-            unsetConnect(connect_[obj].uuid);
-        }
-    }
-}, 500);
-
 function unsetConnect( id, port ) {
     var obj = connect_[id];
     if (port !== undefined && connect_[port] !== undefined){
@@ -724,6 +709,20 @@ Module.prototype.reset = function() {
 };
 
 Module.prototype.init = function(handler, config) {
+    setInterval(function disconnectHandler(){// disconnect cheak
+        for (var obj in connect_){
+            newT = new Date().getTime();
+            oldT = connect_[obj].ping;
+            if (oldT === undefined){
+                continue;
+            }
+            if (newT - oldT > 3500){
+                // disconnect
+                console.log("DC");//모듈 disconnect
+                unsetConnect(connect_[obj].uuid);
+            }
+        }
+    }, 500);
 };
 
 Module.prototype.requestInitialData = function() {
