@@ -354,7 +354,7 @@ Module.prototype.offPnp = function(id){
 
 Module.prototype.getJson = function() {
     while (true) {
-        var index = messageBuffer_.search('{');
+        var index = messageBuffer_.indexOf('{');
 
         if (index === -1) {
             messageBuffer_ = "";
@@ -363,7 +363,7 @@ Module.prototype.getJson = function() {
 
         messageBuffer_ = messageBuffer_.slice(index);
 
-        index = messageBuffer_.search('}');
+        index = messageBuffer_.indexOf('}');
         if (index === -1) {
             return false;
         }
