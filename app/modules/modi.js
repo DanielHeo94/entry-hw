@@ -1,231 +1,235 @@
-var connect_ = {}; // The object containing connected modules' information.
-var moduleNames = [];
-var moduleNumber = 0; // Module number.
-var moduleName = null; // Module name.
-var path = ""; // Serial port number.
-var messageBuffer_ = ""; // JSON message buffer from modules.
-var clear = null; // Display clear command JSON object.
-
-var moduleCount = {
-    number: 0,
-    random: 0,
-    mic: 0,
-    dial: 0,
-    environment: 0,
-    gyro: 0,
-    button: 0,
-    ir: 0,
-    ultrasonic: 0,
-    motor: 0,
-    led: 0,
-    display: 0,
-    speaker: 0,
-    usb: 0,
-    network: 0
-};
-
-// Parts numbers to set properties of output modules.
-var setProperty = {
-    LED_RGB: 16,
-
-    MOTOR_TORQUE: 16,
-    MOTOR_SPEED: 17,
-    MOTOR_ANGLE: 18,
-
-    SPEAKER_BUZZER: 16,
-    F_DO_1: 32,
-    F_RE_1: 36,
-    F_MI_1: 41,
-    F_PA_1: 43,
-    F_SOL_1: 48,
-    F_RA_1: 55,
-    F_SO_1: 61,
-    F_DO_S_1: 34,
-    F_RE_S_1: 39,
-    F_PA_S_1: 46,
-    F_SOL_S_1: 52,
-    F_RA_S_1: 58,
-    F_DO_2: 65,
-    F_RE_2: 73,
-    F_MI_2: 82,
-    F_PA_2: 87,
-    F_SOL_2: 97,
-    F_RA_2: 110,
-    F_SO_2: 123,
-    F_DO_S_2: 69,
-    F_RE_S_2: 77,
-    F_PA_S_2: 92,
-    F_SOL_S_2: 103,
-    F_RA_S_2: 116,
-    F_DO_3: 130,
-    F_RE_3: 146,
-    F_MI_3: 165,
-    F_PA_3: 174,
-    F_SOL_3: 196,
-    F_RA_3: 220,
-    F_SO_3: 247,
-    F_DO_S_3: 138,
-    F_RE_S_3: 155,
-    F_PA_S_3: 185,
-    F_SOL_S_3: 207,
-    F_RA_S_3: 233,
-    F_DO_4: 261,
-    F_RE_4: 293,
-    F_MI_4: 329,
-    F_PA_4: 349,
-    F_SOL_4: 392,
-    F_RA_4: 440,
-    F_SO_4: 493,
-    F_DO_S_4: 277,
-    F_RE_S_4: 311,
-    F_PA_S_4: 369,
-    F_SOL_S_4: 415,
-    F_RA_S_4: 466,
-    F_DO_5: 523,
-    F_RE_5: 587,
-    F_MI_5: 659,
-    F_PA_5: 698,
-    F_SOL_5: 783,
-    F_RA_5: 880,
-    F_SO_5: 988,
-    F_DO_S_5: 554,
-    F_RE_S_5: 622,
-    F_PA_S_5: 739,
-    F_SOL_S_5: 830,
-    F_RA_S_5: 932,
-    F_DO_6: 1046,
-    F_RE_6: 1174,
-    F_MI_6: 1318,
-    F_PA_6: 1397,
-    F_SOL_6: 1567,
-    F_RA_6: 1760,
-    F_SO_6: 1975,
-    F_DO_S_6: 1108,
-    F_RE_S_6: 1244,
-    F_PA_S_6: 1479,
-    F_SOL_S_6: 1661,
-    F_RA_S_6: 1864,
-    F_DO_7: 2093,
-    F_RE_7: 2349,
-    F_MI_7: 2637,
-    F_PA_7: 2793,
-    F_SOL_7: 3135,
-    F_RA_7: 3520,
-    F_SO_7: 3951,
-    F_DO_S_7: 2217,
-    F_RE_S_7: 2489,
-    F_PA_S_7: 2959,
-    F_SOL_S_7: 3322,
-    F_RA_S_7: 3729,
-
-    DISPLAY_TEXT: 17
-};
-
-// Parts numbers to get properties of input modules.
-var getProperty = {
-    BUTTON_CLICK: 2,
-    BUTTON_DBLCLICK: 3,
-    BUTTON_TOGGLE: 5,
-    BUTTON_PUSH: 4,
-
-    DIAL_DEGREE: 2,
-
-    IR_DIST: 2,
-    IR_BRIGHT: 3,
-
-    ULTRASONIC_DIST: 2,
-
-    ENVIRONMENT_TEMPER: 6,
-    ENVIRONMENT_HUMID: 7,
-    ENVIRONMENT_BRIGHT: 2,
-    ENVIRONMENT_RED: 3,
-    ENVIRONMENT_BLUE: 5,
-    ENVIRONMENT_GREEN: 4,
-
-    GYRO_ROLL: 2,
-    GYRO_PITCH: 3,
-    GYRO_YAW: 4,
-    // GYRO_GYROX: 5,
-    // GYRO_GYROY: 6,
-    // GYRO_GYROZ: 7,
-    GYRO_ACCELX: 8,
-    GYRO_ACCELY: 9,
-    GYRO_ACCELZ: 10,
-    // GYRO_VIBRATION: 11,
-
-    MIC_VOLUME: 2,
-    MIC_FREQUENCE: 3,
-
-    DISPLAY_CURSORX: 2,
-    DISPLAY_CURSORY: 3,
-
-    LED_RED: 2,
-    LED_GREEN: 3,
-    LED_BLUE: 4,
-
-    SPEAKER_FREQ: 3,
-    SPEAKER_VOLUME: 2,
-
-    MOTOR_RDEGREE: 4,
-    MOTOR_LDEGREE: 12,  
-    MOTOR_RSPEED: 3,
-    MOTOR_LSPEED: 11,
-    MOTOR_RTORQUE: 2,
-    MOTOR_LTORQUE: 10
-};
-
-var outputIndex = {
-    "led" : 0,
-    "motor" : 0, 
-    "speaker" : 0,
-    "display" : 0
-}
-
 function Module() {
+    this.connectedModules = {};
+
     isConnected = true;
 
     this.requestData = null;
     this.moduleData = null;
+
+    this.serialPort = new String();
+    this.messageBuffer = new String();
+    this.clear = null;
+
+    this.counts = {
+        number: 0,
+        random: 0,
+        mic: 0,
+        dial: 0,
+        environment: 0,
+        gyro: 0,
+        button: 0,
+        ir: 0,
+        ultrasonic: 0,
+        motor: 0,
+        led: 0,
+        display: 0,
+        speaker: 0,
+        usb: 0,
+        network: 0
+    };
+
+    this.settingPropertyNumbers = {
+        LED_RGB: 16,
+
+        MOTOR_TORQUE: 16,
+        MOTOR_SPEED: 17,
+        MOTOR_ANGLE: 18,
+
+        SPEAKER_BUZZER: 16,
+        F_DO_1: 32,
+        F_RE_1: 36,
+        F_MI_1: 41,
+        F_PA_1: 43,
+        F_SOL_1: 48,
+        F_RA_1: 55,
+        F_SO_1: 61,
+        F_DO_S_1: 34,
+        F_RE_S_1: 39,
+        F_PA_S_1: 46,
+        F_SOL_S_1: 52,
+        F_RA_S_1: 58,
+        F_DO_2: 65,
+        F_RE_2: 73,
+        F_MI_2: 82,
+        F_PA_2: 87,
+        F_SOL_2: 97,
+        F_RA_2: 110,
+        F_SO_2: 123,
+        F_DO_S_2: 69,
+        F_RE_S_2: 77,
+        F_PA_S_2: 92,
+        F_SOL_S_2: 103,
+        F_RA_S_2: 116,
+        F_DO_3: 130,
+        F_RE_3: 146,
+        F_MI_3: 165,
+        F_PA_3: 174,
+        F_SOL_3: 196,
+        F_RA_3: 220,
+        F_SO_3: 247,
+        F_DO_S_3: 138,
+        F_RE_S_3: 155,
+        F_PA_S_3: 185,
+        F_SOL_S_3: 207,
+        F_RA_S_3: 233,
+        F_DO_4: 261,
+        F_RE_4: 293,
+        F_MI_4: 329,
+        F_PA_4: 349,
+        F_SOL_4: 392,
+        F_RA_4: 440,
+        F_SO_4: 493,
+        F_DO_S_4: 277,
+        F_RE_S_4: 311,
+        F_PA_S_4: 369,
+        F_SOL_S_4: 415,
+        F_RA_S_4: 466,
+        F_DO_5: 523,
+        F_RE_5: 587,
+        F_MI_5: 659,
+        F_PA_5: 698,
+        F_SOL_5: 783,
+        F_RA_5: 880,
+        F_SO_5: 988,
+        F_DO_S_5: 554,
+        F_RE_S_5: 622,
+        F_PA_S_5: 739,
+        F_SOL_S_5: 830,
+        F_RA_S_5: 932,
+        F_DO_6: 1046,
+        F_RE_6: 1174,
+        F_MI_6: 1318,
+        F_PA_6: 1397,
+        F_SOL_6: 1567,
+        F_RA_6: 1760,
+        F_SO_6: 1975,
+        F_DO_S_6: 1108,
+        F_RE_S_6: 1244,
+        F_PA_S_6: 1479,
+        F_SOL_S_6: 1661,
+        F_RA_S_6: 1864,
+        F_DO_7: 2093,
+        F_RE_7: 2349,
+        F_MI_7: 2637,
+        F_PA_7: 2793,
+        F_SOL_7: 3135,
+        F_RA_7: 3520,
+        F_SO_7: 3951,
+        F_DO_S_7: 2217,
+        F_RE_S_7: 2489,
+        F_PA_S_7: 2959,
+        F_SOL_S_7: 3322,
+        F_RA_S_7: 3729,
+
+        DISPLAY_TEXT: 17
+    };
+
+    this.gettingPropertyNumbers = {
+        BUTTON_CLICK: 2,
+        BUTTON_DBLCLICK: 3,
+        BUTTON_TOGGLE: 5,
+        BUTTON_PUSH: 4,
+
+        DIAL_DEGREE: 2,
+
+        IR_DIST: 2,
+        IR_BRIGHT: 3,
+
+        ULTRASONIC_DIST: 2,
+
+        ENVIRONMENT_TEMPER: 6,
+        ENVIRONMENT_HUMID: 7,
+        ENVIRONMENT_BRIGHT: 2,
+        ENVIRONMENT_RED: 3,
+        ENVIRONMENT_BLUE: 5,
+        ENVIRONMENT_GREEN: 4,
+
+        GYRO_ROLL: 2,
+        GYRO_PITCH: 3,
+        GYRO_YAW: 4,
+        // GYRO_GYROX: 5,
+        // GYRO_GYROY: 6,
+        // GYRO_GYROZ: 7,
+        GYRO_ACCELX: 8,
+        GYRO_ACCELY: 9,
+        GYRO_ACCELZ: 10,
+        // GYRO_VIBRATION: 11,
+
+        MIC_VOLUME: 2,
+        MIC_FREQUENCE: 3,
+
+        DISPLAY_CURSORX: 2,
+        DISPLAY_CURSORY: 3,
+
+        LED_RED: 2,
+        LED_GREEN: 3,
+        LED_BLUE: 4,
+
+        SPEAKER_FREQ: 3,
+        SPEAKER_VOLUME: 2,
+
+        MOTOR_RDEGREE: 4,
+        MOTOR_LDEGREE: 12,  
+        MOTOR_RSPEED: 3,
+        MOTOR_LSPEED: 11,
+        MOTOR_RTORQUE: 2,
+        MOTOR_LTORQUE: 10
+    };
+
+    this.outputIndex = {
+        "led" : 0,
+        "motor" : 0, 
+        "speaker" : 0,
+        "display" : 0
+    }
 }
 
-function unsetConnect( id, port ) {
-    var obj = connect_[id];
-    if (port !== undefined && connect_[port] !== undefined){
-        obj = connect_[port][id];
+Module.prototype.unsetConnect = function(id, port) {
+    var obj = this.connectedModules[id];
+
+    if (port !== undefined && this.connectedModules[port] !== undefined) {
+        obj = this.connectedModules[port][id];
     }
-    if (obj === undefined)
+
+    if (obj === undefined) {
         return;
-    if(moduleCount[obj.moduleT] > 0){
-        moduleCount[obj.moduleT]--;
     }
-    delete(connect_[obj.port][obj.id]);
-    delete(connect_[obj.uuid]);
+
+    if(this.counts[obj.moduleT] > 0) {
+        this.counts[obj.moduleT]--;
+    }
+
+    delete(this.connectedModules[obj.port][obj.id]);
+    delete(this.connectedModules[obj.uuid]);
 }
 
 Module.prototype.setConnect = function( categoryT, moduleT, port, id, uuid ) {
-    if (connect_[port] === undefined){
-        connect_[port] = {};
+    if (this.connectedModules[port] === undefined) {
+        this.connectedModules[port] = {};
     }
-    if (connect_[uuid] === undefined){
-        connect_[uuid] = {};
+
+    if (this.connectedModules[uuid] === undefined) {
+        this.connectedModules[uuid] = {};
     }
-    else if(connect_[uuid].id){
+
+    else if (this.connectedModules[uuid].id) {
         return;
     }
-    var obj = connect_[uuid];
+
+    var obj = this.connectedModules[uuid];
     obj.uuid = uuid;
     obj.categoryT = categoryT;
-    obj.num = moduleCount[moduleT]++;
+    obj.num = this.counts[moduleT]++;
     obj.id = id;
     obj.port = port;
     obj.moduleT = moduleT;
     obj.value = [];
 
-    if (connect_[port] === undefined){
-        connect_[port] = {};
+    if (this.connectedModules[port] === undefined){
+        this.connectedModules[port] = {};
     }
 
-    connect_[port][id] = uuid;
+    this.connectedModules[port][id] = uuid;
 }
 
 Module.prototype.updateHealth = function(id, port){
@@ -240,13 +244,13 @@ Module.prototype.updateHealth = function(id, port){
 Module.prototype.isConnect = function(id, port) {
     var uuid = id;
     if (port !== undefined){
-        if (connect_[port] === undefined){
+        if (this.connectedModules[port] === undefined){
             return undefined;
         }
-        uuid = connect_[port][id];
+        uuid = this.connectedModules[port][id];
     }
 
-    return connect_[uuid];
+    return this.connectedModules[uuid];
 }
 
 Module.prototype.str2ab = function(str) {
@@ -287,9 +291,9 @@ Module.prototype.handleJsonMessage = function(object) {
 
     switch(obj.c) {
         case 0x00:
-            this.updateHealth(obj.id, path);
+            this.updateHealth(obj.id, this.serialPort);
             this.requestData = null;
-            console.log(object);
+            //console.log(object);
 
             break;
 
@@ -302,7 +306,7 @@ Module.prototype.handleJsonMessage = function(object) {
             obj.uuid = Number("0x" + (type[0]).toString(16) + (new Uint32Array(buffer, 0, 1)[0]).toString(16));
             obj.category = arr[0];
             obj.module = arr[1];
-            obj.from = path;
+            obj.from = this.serialPort;
             this.setConnect( obj.category, obj.module, obj.from, obj.id, obj.uuid);
 
             break;
@@ -318,9 +322,9 @@ Module.prototype.handleJsonMessage = function(object) {
                 return;
             }
 
-            for(var i in connect_){
-                if(obj.id == connect_[i].id){
-                    connect_[i].value[object.d] = Math.floor(propertyValue/10);  
+            for(var i in this.connectedModules){
+                if(obj.id == this.connectedModules[i].id){
+                    this.connectedModules[i].value[object.d] = Math.floor(propertyValue/10);  
                 }
             }
 
@@ -332,31 +336,30 @@ Module.prototype.handleJsonMessage = function(object) {
 }
 
 Module.prototype.offPnp = function(id){
-    console.log("offPnp");
-    var offStr= {"c":9,"s":0,"d":id,"b":"AAI=","l":2};
-    this.requestData = JSON.stringify(offStr);
+    console.log("Plug And Play disabled");
+    this.requestData = JSON.stringify({"c": 9, "s": 0, "d": id, "b": "AAI=", "l": 2});
 }
 
 Module.prototype.getJson = function() {
     while (true) {
-        var index = messageBuffer_.indexOf('{');
+        var index = this.messageBuffer.indexOf('{');
 
         if (index === -1) {
-            messageBuffer_ = "";
+            this.messageBuffer = "";
             return false;
         }
 
-        messageBuffer_ = messageBuffer_.slice(index);
+        this.messageBuffer = this.messageBuffer.slice(index);
 
-        index = messageBuffer_.indexOf('}');
+        index = this.messageBuffer.indexOf('}');
         if (index === -1) {
             return false;
         }
 
         index = index + 1;
 
-        var jsonString = messageBuffer_.slice(0, index);
-        messageBuffer_ = messageBuffer_.slice(index);
+        var jsonString = this.messageBuffer.slice(0, index);
+        this.messageBuffer = this.messageBuffer.slice(index);
 
         var json;
 
@@ -378,13 +381,12 @@ Module.prototype.ab2str = function(buf) {
     return String.fromCharCode.apply(null, new Uint8Array(buf));
 }
 
-Module.prototype.setSerialPort = function(sp) {
-    path = sp.path;
+Module.prototype.setSerialPort = function(serialPort) {
+    this.serialPort = serialPort.path;
 };
 
-// Handle data from hardware modules.
-Module.prototype.handleLocalData = function(data) { // data: Native Buffer
-    messageBuffer_ += data;
+Module.prototype.handleLocalData = function(data) {
+    this.messageBuffer += data;
 
     while(true) {
         var json = this.getJson();
@@ -400,42 +402,35 @@ Module.prototype.handleLocalData = function(data) { // data: Native Buffer
 
 // Handle data from entry.js.
 Module.prototype.handleRemoteData = function(handler) {
-    /*
-        Modules
-            Module Name
-                Module Number
-                    Values...
-            ...
-    */
     var modules = handler.read('moduleValue');
+    var moduleNames = new Array();
 
-    if(moduleNames.length < Object.keys(connect_).length) {
-        for(var i in connect_){
-            if(connect_[i].moduleT)
-                moduleNames.push(connect_[i].moduleT);
+    if (Object.keys(this.connectedModules).length > 0) {
+        for (var i in this.connectedModules) {
+            if (this.connectedModules[i].moduleT !== undefined) {
+                moduleNames.push(this.connectedModules[i].moduleT);
+            }
         }
     }
 
-    moduleName = moduleNames.shift();
-    moduleNumber = outputIndex[moduleName];
+    var moduleName = moduleNames.shift();
+    var moduleNumber = this.outputIndex[moduleName];
 
-    // Module name not defined.
-    if(!modules[moduleName])
+    if(modules[moduleName] === undefined)
         return;
 
-    // Module not connected.
-    if(modules[moduleName].length != 0) {
+    if(modules[moduleName].length !== 0) {
         this.moduleData = modules[moduleName][moduleNumber]; // The values of specific module.
 
         if(!this.moduleData) {
-            outputIndex[moduleName] = 0;
+            this.outputIndex[moduleName] = 0;
             isSet = false;
 
             return;
         }
         
-        if(outputIndex[moduleName] + 1 <= modules[moduleName].length) {
-            outputIndex[moduleName]++;
+        if(this.outputIndex[moduleName] + 1 <= modules[moduleName].length) {
+            this.outputIndex[moduleName]++;
             isSet = false;
         }
     }
@@ -477,8 +472,8 @@ Module.prototype.setProperty = function(modules) {
     if(modules.value1) {
         view[0] = modules.value1;
 
-        if(setProperty[modules.value1]) {
-            view[0] = setProperty[modules.value1];
+        if(this.settingPropertyNumbers[modules.value1]) {
+            view[0] = this.settingPropertyNumbers[modules.value1];
         }
     }
 
@@ -492,7 +487,7 @@ Module.prototype.setProperty = function(modules) {
 
     var b64 = btoa(this.ab2str(buffer));
 
-    obj.s = setProperty[modules.module];//function ID
+    obj.s = this.settingPropertyNumbers[modules.module];//function ID
     obj.d = modules.id;// module ID
     obj.b = b64;// property value
     clear = null; // flush display
@@ -544,7 +539,7 @@ Module.prototype.setDisplay = function(modules) {
 
     var b64 = btoa(this.ab2str(buffer));
 
-    obj.s = setProperty[modules.module]; //function ID
+    obj.s = this.settingPropertyNumbers[modules.module]; //function ID
     obj.d = modules.id;// module ID
     obj.b = b64;// property value
 
@@ -561,15 +556,15 @@ Module.prototype.getProperty = function() {
         return arr.shift();  
     }
 
-    if(connect_.length == 0)
+    if(this.connectedModules.length == 0)
         return;
 
-    for(var i in connect_) {
-        if(i != path){
-            for(var j in getProperty){
+    for(var i in this.connectedModules) {
+        if(i != this.serialPort){
+            for(var j in this.gettingPropertyNumbers){
                 var s = j.split("_")[0].toLowerCase();
-                if(s == connect_[i].moduleT){
-                    arr.push(this.getPropertyJson(getProperty[j], connect_[i].id));
+                if(s == this.connectedModules[i].moduleT){
+                    arr.push(this.getPropertyJson(this.gettingPropertyNumbers[j], this.connectedModules[i].id));
                 }
             }
         }
@@ -598,15 +593,16 @@ Module.prototype.getPropertyJson = function(propertyNumber, moduleId) {
 };
 
 Module.prototype.requestRemoteData = function(handler) {
+    var self = this;
     var arr = new Object();
 
-    $.each(connect_,function(index) {
-        if(index != path){
-            if(arr[connect_[index].moduleT] == undefined) {
-                arr[connect_[index].moduleT] = new Array();
+    $.each(this.connectedModules,function(index) {
+        if(index != this.serialPort){
+            if(arr[self.connectedModules[index].moduleT] == undefined) {
+                arr[self.connectedModules[index].moduleT] = new Array();
             }
 
-            arr[connect_[index].moduleT][connect_[index].num] = JSON.stringify(connect_[index]);
+            arr[self.connectedModules[index].moduleT][self.connectedModules[index].num] = JSON.stringify(self.connectedModules[index]);
         }
     });
 
@@ -633,29 +629,14 @@ Module.prototype.lostController = function(self, callback) {
     Module.prototype.resetProperty = function() {
     clear = null;
     oldData = null;
-    outputIndex = {
-        "led" : 0,
-        "motor" : 0, 
-        "speaker" : 0,
-        "display" : 0
-    };
-    moduleCount = {
-        number: 0,
-        random: 0,
-        mic: 0,
-        dial: 0,
-        environment: 0,
-        gyro: 0,
-        button: 0,
-        ir: 0,
-        ultrasonic: 0,
-        motor: 0,
-        led: 0,
-        display: 0,
-        speaker: 0,
-        usb: 0,
-        network: 0
-    };
+    
+    for (var index in this.outputIndex) {
+        this.outputIndex[index] = 0;
+    }
+
+    for (var index in this.counts) {
+        this.counts[index] = 0;
+    }
 
     //reset command
     var obj = {};
@@ -669,57 +650,48 @@ Module.prototype.lostController = function(self, callback) {
     obj.s = 0;
     obj.d = 0xFFF;
     obj.b = b64;
+
     obj.l = 1;
 
-    return JSON.stringify(obj);  
+    return JSON.stringify(obj);
 };
 
 Module.prototype.reset = function() {
     this.moduleData = null;
     this.requestData = null;
-    connect_ = {};
+    this.connectedModules = {};
     arr = [];
-    path = "";
-    messageBuffer_ = "";
+    this.serialPort = "";
+    this.messageBuffer = "";
     clear = null;
     oldData = null;
-    outputIndex = {
-        "led" : 0,
-        "motor" : 0, 
-        "speaker" : 0,
-        "display" : 0
-    };
-    moduleCount = {
-        number: 0,
-        random: 0,
-        mic: 0,
-        dial: 0,
-        environment: 0,
-        gyro: 0,
-        button: 0,
-        ir: 0,
-        ultrasonic: 0,
-        motor: 0,
-        led: 0,
-        display: 0,
-        speaker: 0,
-        usb: 0,
-        network: 0
-    };
+
+    for (var index in this.outputIndex) {
+        this.outputIndex[index] = 0;
+    }
+
+    for (var index in this.counts) {
+        this.counts[index] = 0;
+    }
 };
 
 Module.prototype.init = function(handler, config) {
-    setInterval(function disconnectHandler(){// disconnect cheak
-        for (var obj in connect_){
-            newT = new Date().getTime();
-            oldT = connect_[obj].ping;
-            if (oldT === undefined){
+    var self = this;
+
+    setInterval(() => {
+        for (var index in self.connectedModules) {
+            var module = self.connectedModules[index];
+
+            var currentTime = new Date().getTime();
+            var lastConnectedTime = module.ping;
+            
+            if (lastConnectedTime === undefined) {
                 continue;
             }
-            if (newT - oldT > 3500){
-                // disconnect
-                console.log("DC");//모듈 disconnect
-                unsetConnect(connect_[obj].uuid);
+            
+            if (currentTime - lastConnectedTime > 3500) {
+                console.log("Module (uuid: " + module.uuid + ") disconnected");
+                this.unsetConnect(module.uuid);
             }
         }
     }, 500);
