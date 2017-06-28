@@ -1,8 +1,8 @@
 {
-    "id": "160101",
+    "id": "999999",
     "name": {
         "en": "MODI",
-        "ko": "MODI"
+        "ko": "모디"
     },
     "platform": ["win32"],
     "icon": "modi.png",

@@ -7,11 +7,11 @@
 </head>
 <body>
 	<div id="socketId"></div>
-	<div id="isMatched">Connecting....</div>
+	<div id="isMatched">연결중....</div>
 	<br/>
 	<br/>
-	<button id="gogo">MODI Connect</button>
-	<button id="gogo2">Transfer Data to MODI</button>
+	<button id="gogo">엔트리 하드웨어 연결</button>
+	<button id="gogo2">엔트리 하드웨어에 데이터 전송</button>
 	<iframe id="gogojang" width="1" height="1" style="visibility:hidden" onload="console.log('aa');" onerror="console.log('bb');"></iframe>
 </body>
 <script type="text/javascript">
@@ -23,11 +23,11 @@
 
 		socket.on('matched', function () {
 			console.log('matched');
-			$('#isMatched').text('Connected');
+			$('#isMatched').text('연결됨');
 		});
 		socket.on('matching', function () {
 			console.log('matching');
-			$('#isMatched').text('Connecting....');
+			$('#isMatched').text('연결중....');
 		});
 		socket.on('mode', function (mode) {
 			socket.mode = mode;

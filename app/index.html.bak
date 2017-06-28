@@ -13,7 +13,7 @@
 			<!-- <button class="navigate_button" id="forward"></button> -->
 			<button class="navigate_button" id="refresh"></button>
 		</div>
-		<h1 id="title">Hardware Select</h1>
+		<h1 id="title">하드웨어 선택</h1>
 		<div id="cloud_icon">
 			<span class="cloud_icon"></span>
 			<span class="cloud_text">Cloud Mode</span>
@@ -23,11 +23,12 @@
 		<div>
 			<img src="./src/images/alert.png" />
 			<span class="alertMsg">
-				<span class="alertMsg1">If unexpected problem occurs while operating MODI,</span>
-				<span class="alertMsg2">contact LuxRobo to resolve the problem.</span>
+				<span class="alertMsg1">하드웨어 연결과 작동 시 예기치 못한 문제가 발생할 수 있습니다.</span>
+				<span class="alertMsg2">문제 발생 시 해당 하드웨어 업체에 문의해주세요.</span>
 			</span>
 		</div>
 		<div class="comment">
+			* 하드웨어 연결 프로그램에 등록된 하드웨어들은 각 업체가 제공하고 개발한 것이며, 엔트리교육연구소는 본 프로그램 이외에는 책임지지 않습니다.
 		</div>
 	</div>
 	<!--
@@ -87,20 +88,20 @@
 		<div class="select_port_child">
 			<div class="title">
 				<span>
-					Select.
+					선택하세요.
 				</span>
 				<div class="cancel_icon cancel_event">					
 				</div>
 			</div>
 			<div class="content">
 				<div class="description">
-					Select COM PORT to connect.
+					연결할 COM PORT를 선택하세요.
 				</div>
 				<select multiple size="10" id="select_port">
 				</select>
 				<div>
-					<button id="btn_select_port_cancel" class="cancel_event">Cancel</button>
-					<button id="btn_select_port">Select</button>
+					<button id="btn_select_port_cancel" class="cancel_event">취소</button>
+					<button id="btn_select_port">선택</button>
 				</div>
 			</div>
 		</div>

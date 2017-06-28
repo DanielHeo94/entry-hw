@@ -1,13 +1,10 @@
 {
   "name": "Entry_HW",
-  "version": "1.6.9",
   "scripts": {
     "clean": "rimraf dist",
     "pack": "build",
     "dist": "build --arch ia32",
-    "start": "set NODE_ENV=development&&electron -d app",
-    "build": "electron-packager . app --platform win32 --arch x64 --icon=icon.ico --out dist/",
-    "setup": "electron-installer-windows --src dist/app-win32-x64/ --dest dist/installers/"
+    "start": "set NODE_ENV=development&&electron -d app"
   },
   "build": {
     "dmg": {
@@ -47,16 +44,10 @@
     "iconUrl": "https://raw.githubusercontent.com/entrylabs/entry-hw/feature/electron/build/icon.ico"
   },
   "devDependencies": {
-    "electron": "1.4.15",
     "electron-builder": "10.5.0",
-    "electron-installer-windows": "^0.2.0",
     "electron-packager": "^8.1.0",
+    "electron-prebuilt": "1.4.5",
     "rimraf": "^2.5.4"
   },
-  "dependencies": {
-    "bindings": "^1.2.1",
-    "object.assign": "^4.0.4",
-    "socket.io": "^2.0.3",
-    "socket.io-client": "^2.0.3"
-  }
+  "dependencies": {}
 }

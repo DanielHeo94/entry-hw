@@ -127,9 +127,9 @@ app.once('ready', function() {
     let title;
 
     if(language === 'ko') {
-        title = 'Play MODI v';
+        title = '엔트리 하드웨어 v';
     } else {
-        title = 'Play MODI v'
+        title = 'Entry Hardware v'
     }
 
     mainWindow = new BrowserWindow({

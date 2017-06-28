@@ -46,9 +46,9 @@
 
     $('html').addClass(process.platform);
     // ui & control
- 	$('.alertMsg .alertMsg1').text(translator.translate('If unexpected problem occurs while operating MODI,'));
-    $('.alertMsg .alertMsg2').text(translator.translate('contact LuxRobo to resolve the problem.'));
-    $('#errorAlert .comment').text(translator.translate(''));
+    $('.alertMsg .alertMsg1').text(translator.translate('If unexpected problem occurs while operating,'));
+    $('.alertMsg .alertMsg2').text(translator.translate('contact the hardware company to resolve the problem.'));
+    $('#errorAlert .comment').text(translator.translate('* Entry Labs is not responsible for the extension program and hardware products on this site.'));
 
 
     $('#select_port_box .title span').text(translator.translate('Select'));
@@ -66,9 +66,8 @@
     $('#driverButtonSet').on('click', 'button', function() {
         if (!driverDefaultPath) {
             var sourcePath = path.join(__dirname, 'drivers');
-            var asarIndex = __dirname.indexOf('app.asar');
-            if (asarIndex >= 0) {
-                driverDefaultPath = path.join(__dirname.substr(0, asarIndex), 'drivers');
+            if (__dirname.indexOf('.asar') >= 0) {
+                driverDefaultPath = path.join(__dirname, '..', 'drivers');
                 if (!fs.existsSync(driverDefaultPath)) {
                     copyRecursiveSync(sourcePath, driverDefaultPath);
                 }
@@ -311,7 +310,6 @@
 
                 var port = prevPort || router.connector.sp.path;
                 var baudRate = config.firmwareBaudRate;
-                var MCUType = config.firmwareMCUType;
                 $('#firmwareButtonSet').hide();
                 ui.showAlert(translator.translate("Firmware Uploading..."));
                 router.close();
@@ -319,10 +317,7 @@
                     flasherProcess = flasher.flash(
                         firmware,
                         port,
-                        {
-                            baudRate: baudRate,
-                            MCUType: MCUType,
-                        },
+                        baudRate,
                         function(error, stdout, stderr) {
                             if (error) {
                                 if(firmwareCount > 10) {
@@ -383,7 +378,7 @@
     });
 
     $('body').on('click', '#refresh', function(e) {
-        if (confirm('Relaunch the program')) {
+        if (confirm('프로그램을 재시작 하시겠습니까?')) {
             ipcRenderer.send('reload');
         }
     });
@@ -401,7 +396,7 @@
     window.onbeforeunload = function(e) {
         var isQuit = true;
         if (router.connector && router.connector.connected) {
-            isQuit = confirm(translator.translate('The connection to the hardware will be lost when you end the program.'));
+            isQuit = confirm(translator.translate('Connection to the hardware will terminate once program is closed.'));
         }
 
         if (isQuit) {
@@ -420,7 +415,7 @@
     $('#btn_select_port').click(function(e) {
         var com_port = $("#select_port").val();
         if (!com_port) {
-            alert('?�결??COM PORT�??�택?�세??');
+            alert('연결할 COM PORT를 선택하세요.');
         } else {
             window.currentConfig.this_com_port = com_port[0];
             clear_select_port();
@@ -430,8 +425,7 @@
     $('#select_port_box .cancel_event').click(function(e) {
         clear_select_port();
         clearTimeout(select_port_connection);
-        // com port ?�택???�라?�버?� ?�웨???�치가 ?�되??문제 ?�단 간단?�게 ?�결
-        // ui.showRobotList();
+        ui.showRobotList();
     });
 
     function clear_select_port() {
@@ -503,7 +497,7 @@
             state = "disconnected";
             router.close();
         } else if (state === 'before_connect' && window.currentConfig.firmware) {
-            ui.showAlert(translator.translate('Connecting to hardware device.') + ' ?�웨?��? ?�택??주세??');
+            ui.showAlert(translator.translate('Connecting to hardware device.') + ' 펌웨어를 선택해 주세요.');
         }
         ui.setState(state);
         server.setState(state);
